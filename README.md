@@ -38,3 +38,4 @@ npm run usdjs:render:png -- --root /ABS/PATH/TO/ASSET_ROOT --entry scene.usda --
 
 
 
+
