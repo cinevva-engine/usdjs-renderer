@@ -5,13 +5,13 @@
   "description": "Headless Chromium renderer for @cinevva/usdjs-viewer output (pixel-parity screenshots).",
   "license": "MIT",
   "author": "Cinevva",
-  "homepage": "https://github.com/cinevva/usdjs-renderer#readme",
+  "homepage": "https://cinevva-engine.github.io/usdjs-renderer/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cinevva/usdjs-renderer.git"
+    "url": "git+https://github.com/cinevva-engine/usdjs-renderer.git"
   },
   "bugs": {
-    "url": "https://github.com/cinevva/usdjs-renderer/issues"
+    "url": "https://github.com/cinevva-engine/usdjs-renderer/issues"
   },
   "sideEffects": false,
   "files": [
@@ -28,10 +28,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitepress": "^1.5.0"
   },
   "peerDependencies": {
     "playwright": "^1.40.0"
