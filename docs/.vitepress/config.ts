@@ -8,7 +8,8 @@ export default defineConfig({
   lastUpdated: true,
 
   head: [
-    ['meta', { name: 'theme-color', content: '#e91e63' }],
+    ['meta', { name: 'theme-color', media: '(prefers-color-scheme: light)', content: '#8b5cf6' }],
+    ['meta', { name: 'theme-color', media: '(prefers-color-scheme: dark)', content: '#070714' }],
   ],
 
   themeConfig: {
