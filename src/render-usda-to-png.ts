@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveViewerDistDir } from './viewerDist.js';
 
 type Args = {
   rootDir: string;
@@ -8,6 +9,7 @@ type Args = {
   width: number;
   height: number;
   compose: boolean;
+  viewerDist: string | null;
 };
 
 function parseArgs(argv: string[]): Args {
@@ -24,11 +26,12 @@ function parseArgs(argv: string[]): Args {
   const width = Number(get('--width') ?? 1024);
   const height = Number(get('--height') ?? 1024);
   const compose = has('--no-compose') ? false : true;
+  const viewerDist = get('--viewer-dist');
 
   if (!Number.isFinite(width) || width <= 0) throw new Error(`Invalid --width ${width}`);
   if (!Number.isFinite(height) || height <= 0) throw new Error(`Invalid --height ${height}`);
 
-  return { rootDir, entryPath, outPng, width, height, compose };
+  return { rootDir, entryPath, outPng, width, height, compose, viewerDist };
 }
 
 function safeResolveUnderRoot(rootAbs: string, rel: string): string | null {
@@ -41,8 +44,8 @@ function safeResolveUnderRoot(rootAbs: string, rel: string): string | null {
   return abs;
 }
 
-function mimeForExt(ext: string): string {
-  const e = ext.toLowerCase();
+function mimeForExt(extOrPath: string): string {
+  const e = extOrPath.startsWith('.') ? extOrPath.toLowerCase() : path.extname(extOrPath).toLowerCase();
   if (e === '.html') return 'text/html; charset=utf-8';
   if (e === '.js') return 'text/javascript; charset=utf-8';
   if (e === '.css') return 'text/css; charset=utf-8';
@@ -71,7 +74,7 @@ function readAllTextUsdFiles(rootAbs: string): Array<{ path: string; text: strin
         continue;
       }
       const ext = path.extname(ent.name).toLowerCase();
-      // Note: usdjs viewer currently consumes USDA text layers; include .usda/.usd/.txt for now.
+      // Note: the headless entrypoint supports providing textFiles for USDA composition.
       if (ext === '.usda' || ext === '.usd' || ext === '.txt') {
         out.push({ path: rel, text: fs.readFileSync(abs, 'utf8') });
       }
@@ -104,17 +107,10 @@ async function main() {
     throw new Error(msg);
   }
 
-  const viewerDistDir = path.resolve(process.cwd(), 'packages/usdjs-viewer/dist');
+  const viewerDistDir = resolveViewerDistDir({ viewerDistArg: args.viewerDist });
   const viewerIndexAbs = path.join(viewerDistDir, 'index.html');
-  if (!fs.existsSync(viewerIndexAbs)) {
-    throw new Error(
-      `usdjs-viewer is not built.\n` +
-        `Run:\n  npm run usdjs:viewer:build\n` +
-        `Missing: ${viewerIndexAbs}`,
-    );
-  }
-
   const indexHtml = fs.readFileSync(viewerIndexAbs, 'utf8');
+
   const textFiles = readAllTextUsdFiles(rootAbs);
 
   const browser = await chromium.launch({ headless: true });
@@ -148,7 +144,7 @@ async function main() {
         const buf = fs.readFileSync(abs);
         return route.fulfill({
           status: 200,
-          headers: { 'content-type': mimeForExt(path.extname(abs)) },
+          headers: { 'content-type': mimeForExt(abs) },
           body: buf,
         });
       }
@@ -163,7 +159,6 @@ async function main() {
         if (!fs.existsSync(abs) || !fs.statSync(abs).isFile()) return route.fulfill({ status: 404, body: `not found: ${rel}` });
 
         const ext = path.extname(abs).toLowerCase();
-        // MaterialX files (.mtlx) - XML-based material files
         if (ext === '.mtlx') {
           const text = fs.readFileSync(abs, 'utf8');
           return route.fulfill({ status: 200, headers: { 'content-type': 'application/xml; charset=utf-8' }, body: text });
@@ -175,7 +170,7 @@ async function main() {
         }
 
         const buf = fs.readFileSync(abs);
-        return route.fulfill({ status: 200, headers: { 'content-type': mimeForExt(ext) }, body: buf });
+        return route.fulfill({ status: 200, headers: { 'content-type': mimeForExt(abs) }, body: buf });
       }
 
       return route.fulfill({ status: 404, body: `not found: ${pathname}` });
@@ -210,7 +205,4 @@ main().catch((e) => {
   console.error(e);
   process.exitCode = 1;
 });
-
-
-
 

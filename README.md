@@ -1,19 +1,19 @@
-### USD (USDA) backend renderer (pixel-parity with our `usdjs-viewer`)
+## `@cinevva/usdjs-renderer`
 
-This renderer uses **headless Chromium** to run the **same** Three.js + `@cinevva/usdjs` viewer code and then saves a PNG from the canvas. This is the most reliable way to match our browser viewer output.
+This package renders USD scenes to PNG by running the **same** `@cinevva/usdjs-viewer` code in **headless Chromium (Playwright)** and screenshotting the canvas.
 
-### Prereqs (macOS)
+The key advantage is **pixel parity** with the browser viewer (same Three.js shaders, same material interpretation, same camera defaults).
 
-- **Build the viewer bundle** (so the script can load `packages/usdjs-viewer/dist`):
+### Status (brutally honest)
+
+- This is a **harness**, not a general USD renderer.
+- It assumes the viewer can load/render the scene. If the viewer doesn’t support a schema/material feature, the renderer won’t either.
+- It is not designed for high-throughput batch farms (yet). It’s meant for regression tests and parity checks.
+
+### Install
 
 ```bash
-npm run usdjs:viewer:build
-```
-
-- **Install Playwright + Chromium** (one-time):
-
-```bash
-npm i -D playwright
+npm i -D @cinevva/usdjs-renderer playwright
 npx playwright install chromium
 ```
 
@@ -22,24 +22,21 @@ npx playwright install chromium
 Render an entry USDA file under a root directory (textures/sublayers referenced from the USDA must exist under the same root):
 
 ```bash
-npm run usdjs:render:png -- --root /ABS/PATH/TO/ASSET_ROOT --entry scene.usda --out /ABS/PATH/out.png --width 1024 --height 1024
+usdjs-render-png --root /ABS/PATH/TO/ASSET_ROOT --entry scene.usda --out /ABS/PATH/out.png --width 1024 --height 1024
 ```
 
-- **Camera**: taken from USDA `customLayerData.cameraSettings` when present (same as the viewer), otherwise defaults to viewer defaults.
-- **Render settings**: taken from USDA `customLayerData.renderSettings` when present (same as the viewer), otherwise defaults to viewer defaults.
+If you have a local checkout of the viewer, point to its built `dist`:
+
+```bash
+usdjs-render-png --viewer-dist /ABS/PATH/TO/usdjs-viewer/dist --root /ABS/PATH/TO/ASSET_ROOT --entry scene.usda --out out.png
+```
 
 ### Notes / limitations
 
-- The viewer’s USD text composition is supported via `@cinevva/usdjs` (USDA and composed sublayers/references/payloads as implemented there).
-- Binary USD (`.usdc/.usdz`) support depends on `@cinevva/usdjs` capabilities; the renderer currently treats them as “text” for serving but they may not parse.
+- **Camera/render settings** can be taken from USDA `customLayerData.cameraSettings` / `customLayerData.renderSettings` when present (matching viewer behavior).
+- Binary USD (`.usdc/.usdz`) support depends on `@cinevva/usdjs` capabilities and viewer pipeline.
 
+### License
 
-
-
-
-
-
-
-
-
+MIT (see `LICENSE`).
 

@@ -1,0 +1,48 @@
+{
+  "name": "@cinevva/usdjs-renderer",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Headless Chromium renderer for @cinevva/usdjs-viewer output (pixel-parity screenshots).",
+  "license": "MIT",
+  "author": "Cinevva",
+  "homepage": "https://github.com/cinevva/usdjs-renderer#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cinevva/usdjs-renderer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cinevva/usdjs-renderer/issues"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "usdjs-render-png": "./dist/render-usda-to-png.js",
+    "usdjs-compare-ftlab-samples": "./dist/compare-ftlab-samples.js",
+    "usdjs-generate-ftlab-gallery": "./dist/generate-ftlab-gallery.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "playwright": "^1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
+

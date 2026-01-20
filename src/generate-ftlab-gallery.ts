@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveUsdjsRoot } from './usdjsRoot.js';
 
 type Args = {
-  usdjsRoot: string;
+  usdjsRoot: string | null;
   out: string | null;
   onlyWithCompare: boolean;
 };
@@ -22,7 +23,7 @@ function parseArgs(argv: string[]): Args {
   };
   const has = (k: string) => argv.includes(k);
 
-  const usdjsRoot = get('--usdjs-root') ?? path.resolve(process.cwd(), 'packages/usdjs');
+  const usdjsRoot = get('--usdjs-root');
   const out = get('--out');
   const onlyWithCompare = !has('--include-missing');
   return { usdjsRoot, out, onlyWithCompare };
@@ -63,8 +64,7 @@ function findEntries(sampleRootAbs: string): Entry[] {
 
       // Best-effort ref image: prefer same base name with common extensions.
       const candidates = ['.jpg', '.jpeg', '.png', '.webp', '.gif'].map((ext) => `${imagesDirRel}/${baseName}${ext}`);
-      const refRel =
-        candidates.find((r) => fileExists(path.join(sampleRootAbs, r.replaceAll('/', path.sep)))) ?? candidates[0]!;
+      const refRel = candidates.find((r) => fileExists(path.join(sampleRootAbs, r.replaceAll('/', path.sep)))) ?? candidates[0]!;
 
       entries.push({ sampleRel, imagesDirRel, refRel, cinevvaRel });
     }
@@ -207,13 +207,13 @@ function buildHtml(sampleRootAbs: string, entries: Entry[]): string {
     <div class="wrap">
       <div class="titlebar">
         <h1>cinevva vs ft-lab/sample_usd — gallery</h1>
-        <div class="hint">Open this file from the repo. Links and images are relative to the local "sample_usd-main/" checkout.</div>
+        <div class="hint">Open this file from the corpus checkout. Links and images are relative to the local \"sample_usd-main/\" directory.</div>
       </div>
       <div class="controls">
         <input id="q" type="search" placeholder="Filter by path (e.g. light/spot, Material/UsdPreviewSurface, ...)" />
         <label class="chk">
           <input id="onlyOk" type="checkbox" />
-          only entries with compare+cinevva
+          only entries with cinevva render
         </label>
         <div class="stats" id="stats"></div>
       </div>
@@ -261,12 +261,12 @@ ${rows}
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const usdjsRootAbs = path.resolve(args.usdjsRoot);
+  const usdjsRootAbs = resolveUsdjsRoot({ usdjsRootArg: args.usdjsRoot });
   const sampleRootAbs = path.join(usdjsRootAbs, 'test/corpus/external/ft-lab-sample-usd/sample_usd-main');
   if (!fs.existsSync(sampleRootAbs)) throw new Error(`Missing sample root: ${sampleRootAbs}`);
 
   const all = findEntries(sampleRootAbs);
-  const entries = args.onlyWithCompare ? all : all; // currently all entries are from __compare.png, so already filtered
+  const entries = args.onlyWithCompare ? all : all;
   const html = buildHtml(sampleRootAbs, entries);
 
   const outAbs = args.out ? path.resolve(args.out) : path.join(sampleRootAbs, 'gallery.html');
@@ -279,5 +279,4 @@ main().catch((e) => {
   console.error(e);
   process.exitCode = 1;
 });
-
 
